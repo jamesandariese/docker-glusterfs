@@ -1,0 +1,12 @@
+[Unit]
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm glusterd
+ExecStart=/usr/bin/docker run -i --privileged --net=host -v /srv/gluster/bricks:/srv/gluster/bricks -v /srv/gluster/var/lib/glusterd:/var/lib/glusterd -v /srv/gluster/etc/glusterfs:/etc/glusterfs -v /run/lvm:/run/lvm -v /dev:/dev --name glusterd jamesandariese/glusterfs:6.2 /usr/sbin/glusterd -N -l /dev/stdout -L WARNING
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

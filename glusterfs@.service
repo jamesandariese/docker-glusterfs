@@ -1,0 +1,13 @@
+[Unit]
+After=network-online.target docker.service glusterd.service
+Wants=network-online.target glusterd.service
+Requires=docker.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm glusterfs.%i
+ExecStartPre=-/bin/umount -f /mnt/%i
+ExecStart=/usr/bin/docker run -i --name=glusterfs.%i --net=host --restart=always -v /mnt:/mnt:shared --privileged jamesandariese/glusterfs:6.2 glusterfs -l /dev/stdout -L WARNING -N --volfile-id=%i --volfile-server=127.0.0.1 /mnt/%i
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
