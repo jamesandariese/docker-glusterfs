@@ -31,11 +31,13 @@ docker exec -ti glusterd gluster volume start gvol0
 
 ### Mount a volume
 
-To mount a volume, run the following:
+To mount a volume, create files like `example/mnt-gvol.*` in `/etc/systemd/system`.
+
+You will also need to add the `mount.glusterfs-docker` command to `/sbin`:
 
 ```
-systemctl enable glusterfs@volumeName
-systemctl start glusterfs@volumeName
+docker run -i jamesandariese/glusterfs:6.2 cat /sbin/mount.glusterfs-docker > /sbin/mount.glusterfs-docker
+chmod +x /sbin/mount.glusterfs-docker
 ```
 
-In the above example of creating a volume, `volumeName` would be `gvol0`.  This will mount `volumeName` at `/mnt/volumeName`.
+In the example, `volumeName` would be `gvol0` and it will be mounted at `/mnt/gvol0`.
