@@ -1,0 +1,9 @@
+[Unit]
+
+[Mount]
+What=127.0.0.1:/gvol0
+Where=/mnt/gvol0
+Type=glusterfs-docker
+
+[Install]
+WantedBy=multi-user.target

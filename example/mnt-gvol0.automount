@@ -1,0 +1,6 @@
+[Unit]
+[Automount]
+Where=/mnt/gvol0
+
+[Install]
+WantedBy=multi-user.target
