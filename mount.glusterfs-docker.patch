@@ -1,0 +1,100 @@
+*** mount.glusterfs	2019-06-13 15:10:57.945408012 -0700
+--- mount.glusterfs-docker	2019-06-13 15:05:34.974418451 -0700
+***************
+*** 1,7 ****
+! #!/usr/bin/sh
+  #
+  # Copyright (c) 2013 Red Hat, Inc. <http://www.redhat.com>
+  # Copyright (c) 2015 ungleich GmbH <http://www.ungleich.ch>
+  #
+  # This file is part of GlusterFS.
+  #
+--- 1,8 ----
+! #!/bin/sh
+  #
+  # Copyright (c) 2013 Red Hat, Inc. <http://www.redhat.com>
+  # Copyright (c) 2015 ungleich GmbH <http://www.ungleich.ch>
++ # Copyright (c) 2019 James Andariese <http://strudelline.net>
+  #
+  # This file is part of GlusterFS.
+  #
+***************
+*** 9,14 ****
+--- 10,20 ----
+  # General Public License, version 3 or any later version (LGPLv3 or
+  # later), or the GNU General Public License, version 2 (GPLv2), in all
+  # cases as published by the Free Software Foundation.
++ #
++ # Modified by James Andariese to work with a docker image for the
++ # glusterfs process
++ 
++ echo hi >> /tmp/gluster-mnt
+  
+  warn ()
+  {
+***************
+*** 30,36 ****
+  
+      prefix="/usr";
+      exec_prefix=/usr;
+!     cmd_line=$(echo "/usr/sbin/glusterfs");
+  
+      # check whether getfattr exists
+      export PATH
+--- 36,42 ----
+  
+      prefix="/usr";
+      exec_prefix=/usr;
+!     cmd_line=$(echo "docker run --net=host --privileged -id -v /:/r:rshared -i jamesandariese/glusterfs:6.2 /usr/sbin/glusterfs -N -l /dev/stdout ");
+  
+      # check whether getfattr exists
+      export PATH
+***************
+*** 358,370 ****
+          cmd_line=$(echo "$cmd_line --subdir-mount=/$subdir_mount");
+      fi
+  
+!     cmd_line=$(echo "$cmd_line $mount_point");
+!     $cmd_line;
+      if [ $? -ne 0 ]; then
+          warn "Mount failed. Please check the log file for more details."
+          exit 1;
+      fi
+  
+  
+      inode=$( ${getinode} $mount_point 2>/dev/null);
+      # this is required if the stat returns error
+--- 364,386 ----
+          cmd_line=$(echo "$cmd_line --subdir-mount=/$subdir_mount");
+      fi
+  
+!     premountpoints=`cat /proc/mounts | awk -v mnt="$mount_point" '$2==mnt && $3 != "autofs" {print $3}'`
+! 
+!     cmd_line=$(echo "$cmd_line /r/$mount_point");
+!     echo $cmd_line >> /tmp/gluster-mnt;
+!     DOCKERCNT=`$cmd_line`
+      if [ $? -ne 0 ]; then
+          warn "Mount failed. Please check the log file for more details."
+          exit 1;
+      fi
+  
++     while true;do
++         postmountpoints==`cat /proc/mounts | awk -v mnt="$mount_point" '$2==mnt && $3 != "autofs" {print $3}'`
++         if [ x"$premountpoints" != x"$postmountpoints" ];then
++             break
++         fi
++         sleep 1
++     done
+  
+      inode=$( ${getinode} $mount_point 2>/dev/null);
+      # this is required if the stat returns error
+***************
+*** 774,779 ****
+--- 790,796 ----
+      # variable mount_point
+      [ -z "$mount_point" -o ! -d "$mount_point" ] && {
+          cat <<EOF >&2
++ echo "mount point is $mount_point"
+  ERROR: Mount point does not exist
+  Please specify a mount point
+  Usage:
